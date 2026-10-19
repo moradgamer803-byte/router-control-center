@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Router Control — 3 design options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Manrope:wght@400;600;700;800&family=Poppins:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#0E1116;color:#E8EAED;font:400 15px/1.5 Inter,system-ui,sans-serif;padding:28px 16px 60px}
+  .pagehead{max-width:1280px;margin:0 auto 26px;text-align:center}
+  .pagehead h1{font-size:22px;margin:0 0 6px;font-weight:800;letter-spacing:-.01em}
+  .pagehead p{margin:0;color:#9AA0A6;font-size:14px;max-width:640px;margin-inline:auto}
+  .pagehead .hint{margin-top:10px;font-size:13px;color:#C6CBD1;background:#171B22;border:1px solid #232A33;border-radius:12px;display:inline-block;padding:8px 14px}
+  .frames{display:flex;gap:40px;justify-content:center;align-items:flex-start;flex-wrap:wrap;max-width:1400px;margin:0 auto}
+  .opt{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .badge{width:34px;height:34px;border-radius:50%;background:#171B22;border:2px solid #2A3342;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff}
+  .optlabel{text-align:center}
+  .optlabel b{display:block;font-size:15px;font-weight:700}
+  .optlabel span{font-size:12.5px;color:#9AA0A6}
+  .phone{width:390px;height:844px;border-radius:46px;background:#000;padding:10px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+  .viewport{width:370px;height:824px;border-radius:38px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:96px;height:22px;border-radius:12px;background:#000;z-index:9;opacity:.92}
+
+  /* ---------- shared mockup structure ---------- */
+  .sb{height:34px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12.5px;font-weight:600;flex:none}
+  .appbar{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex:none}
+  .appbar .t{font-size:17px;font-weight:800;letter-spacing:-.01em}
+  .appbar .right{display:flex;align-items:center;gap:10px}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .body{flex:1;overflow:hidden;padding:2px 16px 16px}
+  .card{border-radius:16px;padding:16px;margin-bottom:12px}
+  .row{display:flex;align-items:center;gap:12px;min-height:56px}
+  .grow{flex:1;min-width:0}
+  .icircle{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none}
+  .icircle svg{width:22px;height:22px}
+  .h1{font-size:16.5px;font-weight:700;letter-spacing:-.01em}
+  .h2{font-size:20px;font-weight:800}
+  .meta{font-size:12.5px;margin-top:2px}
+  .overline{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+  .chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .stats{display:flex;gap:10px;margin-bottom:12px}
+  .stat{flex:1;border-radius:16px;padding:12px 14px}
+  .stat .k{font-size:10px;font-weight:800;letter-spacing:.09em}
+  .stat .v{font-size:19px;font-weight:800;margin-top:3px}
+  .devrow{display:flex;align-items:center;gap:12px;min-height:60px}
+  .devrow+.devrow{border-top:1px solid var(--line)}
+  .blockbtn{font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;background:transparent;white-space:nowrap}
+  .thisphone{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
+  .pwrow{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px dashed var(--line)}
+  .pw{font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:600;letter-spacing:2px;flex:1}
+  .mini{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+  .mini svg{width:17px;height:17px}
+  .reboot{width:100%;height:48px;border-radius:14px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+  .reboot svg{width:17px;height:17px}
+  .secrow{display:flex;align-items:baseline;justify-content:space-between;padding:6px 2px 10px}
+  .footnote{max-width:1280px;margin:34px auto 0;text-align:center;color:#848A91;font-size:12.5px}
+  .footnote b{color:#C6CBD1}
+
+  /* ============ DESIGN 1 — NET BLUE (light, clean, trustworthy) ============ */
+  .d1{--bg:#F6F7F9;--card:#FFFFFF;--text:#1A1A1A;--sec:#8A8A8E;--line:#EFEFF0;--accent:#2563EB;--tint:rgba(37,99,235,.10);--ok:#1B7A43;--okbg:rgba(27,122,67,.10);--danger:#E0453A;--dangerbg:rgba(224,69,58,.09);
+      background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+  .d1 .sb{color:#1A1A1A}
+  .d1 .card{background:var(--card);box-shadow:0 1px 3px rgba(16,24,40,.05)}
+  .d1 .appbar .t{color:#1A1A1A}
+  .d1 .icircle{background:var(--tint);color:var(--accent)}
+  .d1 .meta{color:var(--sec)} .d1 .overline{color:var(--sec)}
+  .d1 .chip.ok{background:var(--okbg);color:var(--ok)}
+  .d1 .chip.warn{background:rgba(217,119,6,.12);color:#B45309}
+  .d1 .stat{background:var(--card);box-shadow:0 1px 3px rgba(16,24,40,.05)}
+  .d1 .stat .k{color:var(--sec)} .d1 .stat .v{color:#1A1A1A}
+  .d1 .stat .v.ok{color:var(--ok)}
+  .d1 .blockbtn{border:1.5px solid #D7DCE3;color:#3F4652}
+  .d1 .thisphone{background:var(--tint);color:var(--accent)}
+  .d1 .pw{color:#1A1A1A}
+  .d1 .mini{background:var(--tint);color:var(--accent)}
+  .d1 .reboot{border:1.5px solid rgba(224,69,58,.35);color:var(--danger);background:var(--dangerbg)}
+
+  /* ============ DESIGN 2 — DARK SIGNAL (dark glass, tech dashboard) ============ */
+  .d2{--bg:#121214;--card:#1E1E20;--text:#F2F2F4;--sec:#9A9AA0;--line:#2A2A2E;--accent:#22C55E;--tint:rgba(34,197,94,.13);--ok:#22C55E;--danger:#F87171;
+      background:radial-gradient(120% 60% at 50% 0%,#16201A 0%,var(--bg) 55%);color:var(--text);font-family:Manrope,system-ui,sans-serif}
+  .d2 .appbar .t{color:#F2F2F4}
+  .d2 .card{background:var(--card);border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .d2 .icircle{background:var(--tint);color:var(--accent);border:1px solid rgba(34,197,94,.25)}
+  .d2 .meta{color:var(--sec)} .d2 .overline{color:var(--accent)}
+  .d2 .chip.ok{background:var(--tint);color:var(--ok)}
+  .d2 .chip.warn{background:rgba(251,191,36,.12);color:#FBBF24}
+  .d2 .stat{background:var(--card);border:1px solid var(--line)}
+  .d2 .stat .k{color:var(--sec);font-family:"JetBrains Mono",monospace;letter-spacing:.12em}
+  .d2 .stat .v{color:#F2F2F4;font-family:"JetBrains Mono",monospace}
+  .d2 .stat .v.ok{color:var(--ok)}
+  .d2 .blockbtn{border:1.5px solid #3A3A40;color:#C9CCD1}
+  .d2 .thisphone{background:var(--tint);color:var(--accent)}
+  .d2 .pwrow{border-top-color:#33333A}
+  .d2 .mini{background:#26262B;color:var(--accent)}
+  .d2 .reboot{border:1.5px solid rgba(248,113,113,.35);color:var(--danger);background:rgba(248,113,113,.08)}
+  .d2 .dot.ok{box-shadow:0 0 10px rgba(34,197,94,.9)}
+
+  /* ============ DESIGN 3 — WARM GUARD (friendly, warm, beginner) ============ */
+  .d3{--bg:#FAF5EC;--card:#FFFDF8;--text:#2B2118;--sec:#9C8F7E;--line:#F0E7D8;--accent:#D97706;--tint:rgba(217,119,6,.13);--ok:#2F7D46;--danger:#C2410C;
+      background:var(--bg);color:var(--text);font-family:Poppins,system-ui,sans-serif}
+  .d3 .appbar .t{color:#2B2118}
+  .d3 .card{background:var(--card);border:1px solid #F1E9DB;box-shadow:0 2px 8px rgba(120,90,40,.06)}
+  .d3 .icircle{background:var(--tint);color:var(--accent)}
+  .d3 .h1{font-weight:700}
+  .d3 .meta{color:var(--sec)} .d3 .overline{color:var(--accent)}
+  .d3 .chip.ok{background:rgba(47,125,70,.12);color:var(--ok)}
+  .d3 .chip.warn{background:rgba(217,119,6,.14);color:#B45309}
+  .d3 .stat{background:var(--card);border:1px solid #F1E9DB}
+  .d3 .stat .k{color:var(--sec)} .d3 .stat .v{color:#2B2118}
+  .d3 .stat .v.ok{color:var(--ok)}
+  .d3 .blockbtn{border:1.5px solid #EBDCC4;color:#7A5B2E}
+  .d3 .thisphone{background:var(--tint);color:var(--accent)}
+  .d3 .pwrow{border-top-color:#EFE4D2}
+  .d3 .pw{color:#2B2118}
+  .d3 .mini{background:var(--tint);color:var(--accent)}
+  .d3 .reboot{border:1.5px solid rgba(194,65,12,.30);color:var(--danger);background:rgba(194,65,12,.07)}
+</style>
+</head>
+<body>
+<div class="pagehead">
+  <h1>Router Control Center — 3 design options</h1>
+  <p>Same app, same features — three different looks. Features: WiFi name + password show, connected device list, block/unblock, router reboot, firmware info.</p>
+  <div class="hint">Reply: <b>1</b>, <b>2</b> or <b>3</b> — mixing is fine too ("2, but color from 1")</div>
+</div>
+
+<div class="frames">
+
+<!-- ================= OPTION 1 ================= -->
+<div class="opt">
+  <div class="badge">1</div>
+  <div class="phone"><div class="viewport d1"><div class="notch"></div>
+    <div class="sb"><span>9:41</span><span>▮▮▮ ▾</span></div>
+    <div class="appbar">
+      <div class="t">Router Control</div>
+      <div class="right"><span class="dot" style="background:#1B7A43"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5F6368" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+    <div class="body">
+      <div class="card" style="padding-top:14px">
+        <div class="row" style="min-height:48px">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg></div>
+          <div class="grow">
+            <div class="h1">MORAD WIFI</div>
+            <div class="meta">2.4 GHz · TP-Link TL-WR845N</div>
+          </div>
+          <span class="chip ok">Connected</span>
+        </div>
+        <div class="pwrow">
+          <div class="pw">••••••••</div>
+          <div class="mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">DEVICES</div><div class="v">7</div></div>
+        <div class="stat"><div class="k">INTERNET</div><div class="v ok">Online</div></div>
+        <div class="stat"><div class="k">UPTIME</div><div class="v">21h</div></div>
+      </div>
+      <div class="secrow"><span class="overline">Devices · 7 connected</span><span class="meta" style="font-size:11px">tap Block = no net</span></div>
+      <div class="card" style="padding:4px 16px;margin-bottom:12px">
+        <div class="devrow">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">DESKTOP-SC5NKF3</div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.101</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">OPPO-A15s</div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.103</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">V2234</div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.104</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow" style="opacity:.55">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">Z60-plus<span class="thisphone">THIS PHONE</span></div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.135</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="row" style="min-height:24px">
+          <div class="grow"><div class="h1" style="font-size:15px">Router</div><div class="meta" style="font-size:11.5px">Firmware 0.9.1 · Build 201214</div></div>
+          <span class="chip warn">Update available</span>
+        </div>
+        <button class="reboot" style="font-family:inherit;cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><path d="M12 2v10"/></svg>Reboot Router</button>
+      </div>
+    </div>
+  </div></div>
+  <div class="optlabel"><b>① Net Blue</b><span>clean · trustworthy · light</span></div>
+</div>
+
+<!-- ================= OPTION 2 ================= -->
+<div class="opt">
+  <div class="badge">2</div>
+  <div class="phone"><div class="viewport d2"><div class="notch"></div>
+    <div class="sb"><span>9:41</span><span>▮▮▮ ▾</span></div>
+    <div class="appbar">
+      <div class="t">Router Control</div>
+      <div class="right"><span class="dot ok"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9A9AA0" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+    <div class="body">
+      <div class="card" style="padding-top:14px">
+        <div class="row" style="min-height:48px">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg></div>
+          <div class="grow">
+            <div class="h1">MORAD WIFI</div>
+            <div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">2.4 GHz · TL-WR845N</div>
+          </div>
+          <span class="chip ok">Connected</span>
+        </div>
+        <div class="pwrow">
+          <div class="pw">••••••••</div>
+          <div class="mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">DEVICES</div><div class="v">7</div></div>
+        <div class="stat"><div class="k">NET</div><div class="v ok">Online</div></div>
+        <div class="stat"><div class="k">UPTIME</div><div class="v">21h</div></div>
+      </div>
+      <div class="secrow"><span class="overline">Devices · 7 connected</span><span class="meta" style="font-size:11px;font-family:'JetBrains Mono',monospace">block = tap</span></div>
+      <div class="card" style="padding:4px 16px;margin-bottom:12px">
+        <div class="devrow">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:700">DESKTOP-SC5NKF3</div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.101</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:700">OPPO-A15s</div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.103</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:700">V2234</div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.104</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow" style="opacity:.55">
+          <div class="icircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:700">Z60-plus<span class="thisphone">THIS PHONE</span></div><div class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">192.168.0.135</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="row" style="min-height:24px">
+          <div class="grow"><div class="h1" style="font-size:15px">Router</div><div class="meta" style="font-size:11.5px;font-family:'JetBrains Mono',monospace">FW 0.9.1 · Build 201214</div></div>
+          <span class="chip warn">Update available</span>
+        </div>
+        <button class="reboot" style="font-family:inherit;cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><path d="M12 2v10"/></svg>Reboot Router</button>
+      </div>
+    </div>
+  </div></div>
+  <div class="optlabel"><b>② Dark Signal</b><span>techy · dark dashboard · pro</span></div>
+</div>
+
+<!-- ================= OPTION 3 ================= -->
+<div class="opt">
+  <div class="badge">3</div>
+  <div class="phone"><div class="viewport d3"><div class="notch"></div>
+    <div class="sb"><span>9:41</span><span>▮▮▮ ▾</span></div>
+    <div class="appbar">
+      <div class="t">Router Control</div>
+      <div class="right"><span class="dot" style="background:#2F7D46"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9C8F7E" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+    <div class="body">
+      <div class="card" style="padding-top:14px;border-radius:22px">
+        <div class="row" style="min-height:48px">
+          <div class="icircle" style="border-radius:50%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg></div>
+          <div class="grow">
+            <div class="h1">MORAD WIFI</div>
+            <div class="meta">2.4 GHz · TP-Link TL-WR845N</div>
+          </div>
+          <span class="chip ok">Connected</span>
+        </div>
+        <div class="pwrow">
+          <div class="pw">••••••••</div>
+          <div class="mini" style="border-radius:50%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="mini" style="border-radius:50%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat" style="border-radius:20px"><div class="k">DEVICES</div><div class="v">7</div></div>
+        <div class="stat" style="border-radius:20px"><div class="k">INTERNET</div><div class="v ok">Online</div></div>
+        <div class="stat" style="border-radius:20px"><div class="k">UPTIME</div><div class="v">21h</div></div>
+      </div>
+      <div class="secrow"><span class="overline">Devices · 7 connected</span><span class="meta" style="font-size:11px">Block = internet off</span></div>
+      <div class="card" style="padding:4px 16px;margin-bottom:12px;border-radius:20px">
+        <div class="devrow">
+          <div class="icircle" style="border-radius:50%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">DESKTOP-SC5NKF3</div><div class="meta" style="font-size:11.5px">192.168.0.101</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow">
+          <div class="icircle" style="border-radius:50%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">OPPO-A15s</div><div class="meta" style="font-size:11.5px">192.168.0.103</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow">
+          <div class="icircle" style="border-radius:50%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">V2234</div><div class="meta" style="font-size:11.5px">192.168.0.104</div></div>
+          <button class="blockbtn" style="font-family:inherit;cursor:pointer">Block</button>
+        </div>
+        <div class="devrow" style="opacity:.55">
+          <div class="icircle" style="border-radius:50%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <div class="grow"><div style="font-size:14.5px;font-weight:600">Z60-plus<span class="thisphone">THIS PHONE</span></div><div class="meta" style="font-size:11.5px">192.168.0.135</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0;border-radius:20px">
+        <div class="row" style="min-height:24px">
+          <div class="grow"><div class="h1" style="font-size:15px">Router</div><div class="meta" style="font-size:11.5px">Firmware 0.9.1 · Build 201214</div></div>
+          <span class="chip warn">Update available</span>
+        </div>
+        <button class="reboot" style="font-family:inherit;cursor:pointer;border-radius:999px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><path d="M12 2v10"/></svg>Reboot Router</button>
+      </div>
+    </div>
+  </div></div>
+  <div class="optlabel"><b>③ Warm Guard</b><span>friendly · warm · beginner-easy</span></div>
+</div>
+
+</div>
+
+<div class="footnote">
+  All three get: dark-mode support · loading / empty / error states · big 48dp touch targets · Bangla-English friendly labels.<br>
+  <b>Reply with 1, 2 or 3</b> — then I build the real APK on GitHub (5-10 min) and send the download link.
+</div>
+</body>
+</html>
